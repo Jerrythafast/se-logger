@@ -9,42 +9,36 @@ define("PVO_SYSTEM_ID", "12345");
 
 
 
-$timezone_offset = (int)date("Z");
 $db = new PDO(
   "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8", DB_USERNAME, DB_PASSWORD,
   [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 
 $q = $db->query(
-  "SELECT * FROM telemetry_inverter WHERE timestamp >= (" .
-    "SELECT pvo_last_live FROM live_update" .
-  ") ORDER BY timestamp LIMIT 101");
+  'SELECT timestamp, p_active, temperature, v_ac, se_day ' .
+  'FROM (' .
+    'SELECT ' .
+      'timestamp, p_active, temperature, v_ac, ' .
+      '@curdate := FROM_UNIXTIME(timestamp, "%Y%m%d") date, ' .
+      '@prevsum := IF(@prevdate = @curdate, @prevsum + de_day, de_day) se_day, ' .
+      '@prevdate := @curdate date2 ' .
+    'FROM telemetry_inverter ' .
+    'JOIN (SELECT @prevsum := 0, @curdate := NULL, @prevdate := NULL) vars ' .
+    'WHERE timestamp >= (SELECT UNIX_TIMESTAMP(FROM_UNIXTIME(pvo_last_live, "%Y%m%d")) FROM live_update) ' .
+    'ORDER BY timestamp' .
+  ') x ' .
+  'WHERE timestamp > (SELECT pvo_last_live FROM live_update) ' .
+  'LIMIT 100');
 if($q === false)
   die("Could not get data!\n");
 
-$i = 0;
-$today = 0;
-$e_day = 0;
 $lastdate = 0;
 $data = array();
 while($row = $q->fetch()){
-  //Value of e_day may drop back to zero mid-day if inverter was reset.
-  $day = gmdate("Ymd", $row["timestamp"] + $timezone_offset);
-  if($today != $day){
-    $today = $day;
-    $e_day = $row["e_day"];
-  }
-  else
-    $e_day += $row["de_day"];
-
-  //Had already uploaded the first datum.
-  if(!$i++)
-    continue;
-
   array_push($data, implode(",", [
-    $day,
-    gmdate("H:i", $row["timestamp"] + $timezone_offset),
-    round($e_day),
+    date("Ymd", $row["timestamp"]),
+    date("H:i", $row["timestamp"]),
+    round($row["se_day"]),
     round($row["p_active"]),
     "",
     "",
