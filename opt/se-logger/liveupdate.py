@@ -331,7 +331,7 @@ def parse0500(data):
         'e_day': bytes[6] | (bytes[7] << 8),
         'temperature': (bytes[8] | ~0xFF) if bytes[8] & 0x80 else bytes[8]
       }
-    elif type == 0x0010 and length == 124:  # Inverter data
+    elif type == 0x0010 and length in (124, 174):  # Inverter data
       inv = SEDataInverter.parse(data, pos + 12)
       yield {
         'inv_id':       id & ~0x00800000,

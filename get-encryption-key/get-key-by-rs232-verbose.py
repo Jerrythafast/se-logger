@@ -1,10 +1,23 @@
 #!/usr/bin/env python
-import struct, serial, time
 
 # SETTINGS
 serial_port = "/dev/ttyUSB0"
 inverter_id = 0x7f101234
 
+
+
+import struct, time
+try:
+  import serial
+except ImportError:
+  import sys
+  sys.stderr.write(
+    "Error: This script requires the 'serial' (PySerial) package.\n")
+  sys.stderr.write(
+    "Install the 'python-serial' system package or try running 'pip install pyserial'.\n")
+  sys.stderr.write(
+    "Alternatively, download PySerial from https://pypi.python.org/pypi/pyserial.\n")
+  sys.exit(1)
 
 
 crcTable = (
