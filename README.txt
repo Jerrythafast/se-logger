@@ -1,4 +1,4 @@
-VERSION 0.0.5
+VERSION 0.0.6
 
 ===============================================================================
 INSTALLATION INSTRUCTIONS
@@ -9,6 +9,7 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
 
  1. Install the required system packages:
     mysql-server
+    php-cli
     php-mysql
     php-curl
     python-mysqldb
@@ -84,6 +85,9 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
 
 ===============================================================================
 CHANGELOG
+
+v0.0.6
+ - Added support for CPU version 3.1818.
 
 v0.0.5
  - Added support for CPU version 3.1651.
