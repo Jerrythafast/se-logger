@@ -1,4 +1,5 @@
 <?php
+//Version 0.0.9
 //SETTINGS
 define("DB_HOST", "localhost");
 define("DB_NAME", "solaredge");
@@ -24,7 +25,7 @@ $q = $db->query(
       '@prevdate := @curdate date2 ' .
     'FROM telemetry_inverter ' .
     'JOIN (SELECT @prevsum := 0, @curdate := NULL, @prevdate := NULL) vars ' .
-    'WHERE timestamp >= (SELECT UNIX_TIMESTAMP(FROM_UNIXTIME(pvo_last_live, "%Y%m%d")) FROM live_update) ' .
+    'WHERE timestamp >= (SELECT IFNULL(UNIX_TIMESTAMP(FROM_UNIXTIME(pvo_last_live, "%Y%m%d")), 0) FROM live_update) ' .
     'ORDER BY timestamp' .
   ') x ' .
   'WHERE timestamp > (SELECT pvo_last_live FROM live_update) ' .

@@ -2,6 +2,8 @@
 import struct, sys, MySQLdb, time
 from collections import namedtuple
 
+__version__ = "0.0.9"
+
 # SETTINGS
 inverter_private_key = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 db_user = "dbuser"
@@ -234,7 +236,8 @@ class PCAPParser:
       if len(self.tcp_streams[sid][2]) and pcaptime - min(self.tcp_streams[sid][2][x][2] for x in self.tcp_streams[sid][2]) >= 60:
         # Could not close gap to out-of-order data within a minute, probably missed something!
         newnext = min(self.tcp_streams[sid][2])
-        eprint("%08x  DATA LOSS %i bytes!" % (sid, newnext-self.tcp_streams[sid][0]))
+        if newnext > self.tcp_streams[sid][0]:
+          eprint("%08x  DATA LOSS %i bytes!" % (sid, newnext-self.tcp_streams[sid][0]))
         self.tcp_streams[sid][0] = newnext
 
   def get_out_of_order_bytes(self, pcaptime):
@@ -429,7 +432,7 @@ def parse0500(data):
         'p_apparent':   inv.Papparent,
         'p_reactive':   inv.Preactive
       }
-    elif type == 0x0011 and length in (264,):  # 3ph inverter
+    elif type == 0x0011 and length in (200, 264):  # 3ph inverter
       inv = SEDataInverter3.parse(data, pos + 12)
       yield {
         'inv_id':       id & ~0x00800000,
