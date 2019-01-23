@@ -1,4 +1,4 @@
-VERSION 0.0.6
+VERSION 0.0.7
 
 ===============================================================================
 INSTALLATION INSTRUCTIONS
@@ -85,6 +85,14 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
 
 ===============================================================================
 CHANGELOG
+
+v0.0.7
+ - Added support for three-phase inverters.
+ - Added detection of non-IPv4-non-TCP traffic (and ignore it).
+ - Fixed detection of VLAN-tagged Ethernet frames.
+ - Fixed MySQL warnings about out-of-range FLOAT values.
+ - Now committing to the database only once per telemetry packet, instead of
+   after each item.
 
 v0.0.6
  - Added support for CPU version 3.1818.

@@ -33,6 +33,40 @@ CREATE TABLE telemetry_inverter (
 	PRIMARY KEY (timestamp, inv_id)
 );
 
+CREATE TABLE telemetry_inverter_3phase (
+	inv_id      INT      UNSIGNED NOT NULL,
+	timestamp   INT      UNSIGNED NOT NULL,
+	temperature FLOAT             NOT NULL,
+	e_day       FLOAT             NOT NULL,
+	de_day      FLOAT             NOT NULL,
+	v_ac1       FLOAT             NOT NULL,
+	v_ac2       FLOAT             NOT NULL,
+	v_ac3       FLOAT             NOT NULL,
+	i_ac1       FLOAT             NOT NULL,
+	i_ac2       FLOAT             NOT NULL,
+	i_ac3       FLOAT             NOT NULL,
+	frequency1  FLOAT             NOT NULL,
+	frequency2  FLOAT             NOT NULL,
+	frequency3  FLOAT             NOT NULL,
+	v_dc        FLOAT             NOT NULL COMMENT 'steps of 0.0625 V',
+	e_total     INT      UNSIGNED NOT NULL,
+	i_rcd       FLOAT             NOT NULL,
+	mode        TINYINT  UNSIGNED NOT NULL COMMENT '1 OFF, 2 SLEEPING, 3 STARTING, 4 MPPT, 5 THROTTLED, 6 SHUTTING_DOWN, 8 STANDBY',
+	v_1to2      FLOAT             NOT NULL,
+	v_2to3      FLOAT             NOT NULL,
+	v_3to1      FLOAT             NOT NULL,
+	p_active1   FLOAT             NOT NULL,
+	p_active2   FLOAT             NOT NULL,
+	p_active3   FLOAT             NOT NULL,
+	p_apparent1 FLOAT             NOT NULL,
+	p_apparent2 FLOAT             NOT NULL,
+	p_apparent3 FLOAT             NOT NULL,
+	p_reactive1 FLOAT             NOT NULL,
+	p_reactive2 FLOAT             NOT NULL,
+	p_reactive3 FLOAT             NOT NULL,
+	PRIMARY KEY (timestamp, inv_id)
+);
+
 CREATE TABLE live_update (
 	pvo_last_live INT UNSIGNED NOT NULL,
 	last_0503     BINARY(34)   NOT NULL,

@@ -54,13 +54,26 @@ def calcCrc(data):
 
 #############################################################################################
 
-SEDataInverter = namedtuple("SEDataInverter",
+REROUND = lambda x: -3.4028234e+38 if x == -3.4028234663852886e+38 else x
+SEDataInverter1 = namedtuple("SEDataInverter1",
     "uptime interval Temp EdayAC DeltaEdayAC Vac Iac Freq EdayDC DeltaEdayDC Vdc Idc Etotal_f Ircd "
-    "L1 CosPhi Mode GndFltR f1 IoutDC L2 L3 Pactive Papparent Preactive f2 f3 L4 Etotal_i L5")
-SEDataInverter.size = 120
-SEDataInverter.parse = classmethod(
+    "f1 CosPhi Mode GndFltR f2 IoutDC f3 f4 Pactive Papparent Preactive f5 f6 f7 Etotal_i L1")
+SEDataInverter1.size = 120
+SEDataInverter1.parse = classmethod(
     lambda cls, data, offset=0:
-        cls._make(struct.unpack("<LLffffffLLfLffLfLfffLLfffffLLL", data[offset:offset+cls.size])))
+        cls._make(
+          map(REROUND,
+          struct.unpack("<LLffffffffffffffLfffffffffffLL", data[offset:offset+cls.size]))))
+
+SEDataInverter3 = namedtuple("SEDataInverter3",
+    "uptime interval Temp EdayAC DeltaEdayAC Vac1 Vac2 Vac3 Iac1 Iac2 Iac3 Freq1 Freq2 Freq3 EdayDC DeltaEdayDC Vdc Idc Etotal_f Ircd "
+    "f1_1 f1_2 f1_3 CosPhi1 CosPhi2 CosPhi3 Mode GndFltR f2 IoutDC1 IoutDC2 IoutDC3 V1to2 V2to3 V3to1 Pactive1 Pactive2 Pactive3 Papparent1 Papparent2 Papparent3 Preactive1 Preactive2 Preactive3 f5 f6 f7 Etotal_i L1")
+SEDataInverter3.size = 196
+SEDataInverter3.parse = classmethod(
+    lambda cls, data, offset=0:
+        cls._make(
+          map(REROUND,
+          struct.unpack("<LLffffffffffffffffffffffffLffffffffffffffffffffLL", data[offset:offset+cls.size]))))
 
 #############################################################################################
 
@@ -258,25 +271,43 @@ class PCAPParser:
           break
         pcaprechdr = struct.unpack("<LLLL", pcaprechdr)
         pcaptime = pcaprechdr[0] + pcaprechdr[1]/1000000.
+        packet_offset = pcaprechdr[2]
 
         # Skip over Ethernet header. It may have 4 additional bytes if it is a VLAN tagged frame.
         etherhdr = f.read(etherhdrlen)
-        if etherhdr[12:14] == "\x18\x00":
+        packet_offset -= etherhdrlen
+        ethertype = etherhdr[12:14]
+        if ethertype == "\x81\x00":
           f.read(4)
+          packet_offset -= 4
+          ethertype = etherhdr[16:18]
+        if ethertype != "\x08\x00":
+          # Not IPv4 packet, skip this.
+          # TODO: IPv6 support.
+          f.read(packet_offset)
+          continue
 
         # Skip over the IP header.
-        # TODO: IPv6 support? This will fail badly on any IPv6 traffic.
-        ipheader = struct.unpack(">BBHLLLL", f.read(iphdrlen))
+        ipheader = struct.unpack(">BBHLBBHLL", f.read(iphdrlen))
+        packet_offset -= iphdrlen
         ipheaderlen = (ipheader[0] & 0x0F) << 2
         f.read(ipheaderlen-iphdrlen)  # Skip optional IP header bytes
+        packet_offset -= ipheaderlen-iphdrlen
         ipdatalen = ipheader[2]
+        if ipheader[5] != 6:
+          # Not TCP packet, skip this.
+          f.read(packet_offset)
+          continue
 
         # Parse the TCP header.
         tcpheader = struct.unpack(">HHLLHHHH", f.read(tcphdrlen))
+        packet_offset -= tcphdrlen
         sid = tcpheader[0] | (tcpheader[1] << 16)
         tcpheaderlen = (tcpheader[4] & 0x0F000) >> 10
         f.read(tcpheaderlen-tcphdrlen)  # Skip optional TCP header bytes
+        packet_offset -= tcpheaderlen-tcphdrlen
         data = f.read(ipdatalen-ipheaderlen-tcpheaderlen)  # This is the actual data.
+        packet_offset -= ipdatalen-ipheaderlen-tcpheaderlen
         if etherhdr[6:9] == "\x00\x27\x02":  # Inverter speaking.
 
           # Treat data gaps as loss if not filled within 60 seconds.
@@ -307,7 +338,8 @@ class PCAPParser:
             self.tcp_streams[sid][2][tcpheader[2]] = [data, tcpheader[4], pcaptime]
 
         # There may be some remaining padding bytes after the data; skip that.
-        f.read(pcaprechdr[2]-ipdatalen-etherhdrlen)
+        if packet_offset:
+          f.read(packet_offset)
 
       except struct.error:
         eprint("Warning: file read error!")
@@ -331,8 +363,8 @@ def parse0500(data):
         'e_day': bytes[6] | (bytes[7] << 8),
         'temperature': (bytes[8] | ~0xFF) if bytes[8] & 0x80 else bytes[8]
       }
-    elif type == 0x0010 and length in (124, 174, 180):  # Inverter data
-      inv = SEDataInverter.parse(data, pos + 12)
+    elif type == 0x0010 and length in (124, 174, 180):  # 1ph inverter
+      inv = SEDataInverter1.parse(data, pos + 12)
       yield {
         'inv_id':       id & ~0x00800000,
         'timestamp':    timestamp,
@@ -349,6 +381,40 @@ def parse0500(data):
         'p_active':     inv.Pactive,
         'p_apparent':   inv.Papparent,
         'p_reactive':   inv.Preactive
+      }
+    elif type == 0x0011 and length in (264,):  # 3ph inverter
+      inv = SEDataInverter3.parse(data, pos + 12)
+      yield {
+        'inv_id':       id & ~0x00800000,
+        'timestamp':    timestamp,
+        'temperature':  inv.Temp,
+        'e_day':        inv.EdayAC,
+        'de_day':       inv.DeltaEdayAC,
+        'v_ac1':        inv.Vac1,
+        'v_ac2':        inv.Vac2,
+        'v_ac3':        inv.Vac3,
+        'i_ac1':        inv.Iac1,
+        'i_ac2':        inv.Iac2,
+        'i_ac3':        inv.Iac3,
+        'frequency1':   inv.Freq1,
+        'frequency2':   inv.Freq2,
+        'frequency3':   inv.Freq3,
+        'v_dc':         inv.Vdc,
+        'e_total':      inv.Etotal_i,
+        'i_rcd':        inv.Ircd,
+        'mode':         inv.Mode,
+        'v_1to2':       inv.V1to2,
+        'v_2to3':       inv.V2to3,
+        'v_3to1':       inv.V3to1,
+        'p_active1':    inv.Pactive1,
+        'p_active2':    inv.Pactive2,
+        'p_active3':    inv.Pactive3,
+        'p_apparent1':  inv.Papparent1,
+        'p_apparent2':  inv.Papparent2,
+        'p_apparent3':  inv.Papparent3,
+        'p_reactive1':  inv.Preactive1,
+        'p_reactive2':  inv.Preactive2,
+        'p_reactive3':  inv.Preactive3
       }
     pos += length + 8
 
@@ -382,8 +448,8 @@ for filename in sys.argv[1:]:
       conn.commit()
     if hdr[6] != 0x0500:
       continue
+    updated = False
     for telem in parse0500(msg):
-      updated = False
       if "op_id" in telem:
         db.execute(
           "INSERT IGNORE INTO telemetry_optimizers "
@@ -391,16 +457,23 @@ for filename in sys.argv[1:]:
           "(%(op_id)s, %(timestamp)s, %(uptime)s, %(v_in)s, %(v_out)s, %(i_in)s, %(e_day)s, %(temperature)s)",
           telem)
         updated = True
-      elif "inv_id" in telem:
+      elif "v_ac" in telem:
         db.execute(
           "INSERT IGNORE INTO telemetry_inverter "
           "(inv_id, timestamp, temperature, e_day, de_day, v_ac, i_ac, frequency, v_dc, e_total, i_rcd, mode, p_active, p_apparent, p_reactive) VALUES "
           "(%(inv_id)s, %(timestamp)s, %(temperature)s, %(e_day)s, %(de_day)s, %(v_ac)s, %(i_ac)s, %(frequency)s, %(v_dc)s, %(e_total)s, %(i_rcd)s, %(mode)s, %(p_active)s, %(p_apparent)s, %(p_reactive)s)",
           telem)
         updated = True
-      if updated:
-        db.execute("UPDATE live_update SET last_telemetry = %s", (int(time.time()),))
-        conn.commit()
+      elif "v_ac1" in telem:
+        db.execute(
+          "INSERT IGNORE INTO telemetry_inverter_3phase "
+          "(inv_id, timestamp, temperature, e_day, de_day, v_ac1, v_ac2, v_ac3, i_ac1, i_ac2, i_ac3, frequency1, frequency2, frequency3, v_dc, e_total, i_rcd, mode, v_1to2, v_2to3, v_3to1, p_active1, p_active2, p_active3, p_apparent1, p_apparent2, p_apparent3, p_reactive1, p_reactive2, p_reactive3) VALUES "
+          "(%(inv_id)s, %(timestamp)s, %(temperature)s, %(e_day)s, %(de_day)s, %(v_ac1)s, %(v_ac2)s, %(v_ac3)s, %(i_ac1)s, %(i_ac2)s, %(i_ac3)s, %(frequency1)s, %(frequency2)s, %(frequency3)s, %(v_dc)s, %(e_total)s, %(i_rcd)s, %(mode)s, %(v_1to2)s, %(v_2to3)s, %(v_3to1)s, %(p_active1)s, %(p_active2)s, %(p_active3)s, %(p_apparent1)s, %(p_apparent2)s, %(p_apparent3)s, %(p_reactive1)s, %(p_reactive2)s, %(p_reactive3)s)",
+          telem)
+        updated = True
+    if updated:
+      db.execute("UPDATE live_update SET last_telemetry = %s", (int(time.time()),))
+      conn.commit()
   f.close()
 
 eprint("End of file. Shutting down.")
