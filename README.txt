@@ -1,4 +1,4 @@
-VERSION 0.0.10
+VERSION 0.0.11
 
 ===============================================================================
 INSTALLATION INSTRUCTIONS
@@ -85,6 +85,13 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
 
 ===============================================================================
 CHANGELOG
+
+v0.0.11
+  - Added is-pcap-encrypted.py for checking whether any encryption is already
+    occurring in the data you captured.
+  - No longer sending negative temperatures to PVOutput.
+  - Add support for FS Forth-Systeme WiFi modules (in MAC address filter).
+  - Added db_port configuration setting (default: 3306).
 
 v0.0.10
   - Added support for inverters connected using WiFi modules (DigiBoard MACs).

@@ -1,7 +1,28 @@
 <?php
-//Version 0.0.10
+/*
+ * Copyright (C) 2019 Jerrythafast
+ *
+ * This file is part of se-logger, which captures telemetry data from
+ * the TCP traffic of SolarEdge PV inverters.
+ *
+ * se-logger is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * se-logger is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with se-logger.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+//Version 0.0.11
 //SETTINGS
 define("DB_HOST", "localhost");
+define("DB_PORT", "3306");
 define("DB_NAME", "solaredge");
 define("DB_USERNAME", "dbuser");
 define("DB_PASSWORD", "dbpassword");
@@ -11,7 +32,7 @@ define("PVO_SYSTEM_ID", "12345");
 
 
 $db = new PDO(
-  "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8", DB_USERNAME, DB_PASSWORD,
+  "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8", DB_USERNAME, DB_PASSWORD,
   [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 
@@ -43,7 +64,7 @@ while($row = $q->fetch()){
     round($row["p_active"]),
     "",
     "",
-    $row["temperature"] == 0? "" : $row["temperature"],
+    $row["temperature"] <= 0? "" : $row["temperature"],
     $row["v_ac"] == 0? "" : $row["v_ac"]
   ]));
   $lastdate = $row["timestamp"];

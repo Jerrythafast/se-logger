@@ -1,8 +1,29 @@
 #!/usr/bin/env python
+
+#
+# Copyright (C) 2019 Jerrythafast
+#
+# This file is part of se-logger, which captures telemetry data from
+# the TCP traffic of SolarEdge PV inverters.
+#
+# se-logger is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at
+# your option) any later version.
+#
+# se-logger is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with se-logger.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 import struct, sys, MySQLdb, time
 from collections import namedtuple
 
-__version__ = "0.0.10"
+__version__ = "0.0.11"
 
 # SETTINGS
 inverter_private_key = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -10,6 +31,7 @@ db_user = "dbuser"
 db_pass = "dbpassword"
 db_name = "solaredge"
 db_host = "localhost"
+db_port = 3306
 
 
 
@@ -312,7 +334,7 @@ class PCAPParser:
         packet_offset -= tcpheaderlen-tcphdrlen
         data = f.read(ipdatalen-ipheaderlen-tcpheaderlen)  # This is the actual data.
         packet_offset -= ipdatalen-ipheaderlen-tcpheaderlen
-        if etherhdr[6:9] in ("\x00\x27\x02", "\x00\x40\x9d"):  # Inverter speaking.
+        if etherhdr[6:9] in ("\x00\x27\x02", "\x00\x40\x9d", "\x00\x04\xf3"):  # Inverter speaking.
 
           # Treat data gaps as loss if not filled within 60 seconds.
           self.give_up_gaps(pcaptime)
@@ -354,11 +376,11 @@ class PCAPParser:
 #############################################################################################
 
 class DBManager:
-  def __init__(self, user, passwd, db, host, retries=5):
+  def __init__(self, user, passwd, db, host, port, retries=5):
     self.retries = retries
     while retries:
       try:
-        self.conn = MySQLdb.connect(user=user, passwd=passwd, db=db, host=host)
+        self.conn = MySQLdb.connect(user=user, passwd=passwd, db=db, host=host, port=port)
         self.cursor = self.conn.cursor()
         retries = 0
       except MySQLdb.Error as e:
@@ -479,7 +501,7 @@ def eprint(message):
 
 
 # Connect to database and get last 0503 message.
-db = DBManager(db_user, db_pass, db_name, db_host)
+db = DBManager(db_user, db_pass, db_name, db_host, db_port)
 db.execute("SELECT last_0503 FROM live_update")
 last_0503 = db.fetchone()[0]
 
