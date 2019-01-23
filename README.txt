@@ -1,4 +1,4 @@
-VERSION 0.0.2
+VERSION 0.0.3
 
 ===============================================================================
 INSTALLATION INSTRUCTIONS
@@ -60,6 +60,24 @@ commands used.  Tested with Ubuntu 16.04, MySQL 5.7.12, PHP 7.0.
 
 ===============================================================================
 CHANGELOG
+
+v0.0.3
+ - Added 'uptime' column to the 'telemetry_optimizers' database table.  This is
+   the uptime in seconds (approximately) of each optimizer since last wake-up.
+   The 'e_day' value is reset to zero when the optimizer wakes up, which may
+   happen mid-day in case of very dark rainy periods.
+ - Added 'last_telemetry' column to the 'live_update' database table.  This
+   field will contain the system time of the moment on which the most recent
+   telemetry message was received from the inverter by liveupdate.py.
+ - Fixed incomplete reporting of skipped 'mysterious bytes' in liveupdate.py.
+ - Improved robustness of liveupdate.py by only parsing the data sent by the
+   inverter.  This is detected by looking for the SolarEdge ethernet MAC
+   address prefix 00:27:02.
+ - Greatly improved robustness of liveupdate.py by recognising and reordering
+   out-of-order TCP segments and retransmissions.
+ - liveupdate.py will now correctly identify truncated and damaged messages by
+   checking the checksums and seeking for another message barker if the
+   checksums don't match.
 
 v0.0.2
  - Fixed bug in the detection of mid-day inverter restarts in pvo-upload.php.
