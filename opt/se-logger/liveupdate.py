@@ -2,7 +2,7 @@
 import struct, sys, MySQLdb, time
 from collections import namedtuple
 
-__version__ = "0.0.9"
+__version__ = "0.0.10"
 
 # SETTINGS
 inverter_private_key = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -60,7 +60,7 @@ def calcCrc(data):
 REROUND = lambda x: -3.4028234e+38 if x == -3.4028234663852886e+38 else x
 SEDataInverter1 = namedtuple("SEDataInverter1",
     "uptime interval Temp EdayAC DeltaEdayAC Vac Iac Freq EdayDC DeltaEdayDC Vdc Idc Etotal_f Ircd "
-    "f1 CosPhi Mode GndFltR f2 IoutDC f3 f4 Pactive Papparent Preactive f5 f6 f7 Etotal_i L1")
+    "f1 CosPhi Mode GndFltR PowerLimit IoutDC f3 f4 Pactive Papparent Preactive f5 f6 f7 Etotal_i L1")
 SEDataInverter1.size = 120
 SEDataInverter1.parse = classmethod(
     lambda cls, data, offset=0:
@@ -70,7 +70,7 @@ SEDataInverter1.parse = classmethod(
 
 SEDataInverter3 = namedtuple("SEDataInverter3",
     "uptime interval Temp EdayAC DeltaEdayAC Vac1 Vac2 Vac3 Iac1 Iac2 Iac3 Freq1 Freq2 Freq3 EdayDC DeltaEdayDC Vdc Idc Etotal_f Ircd "
-    "f1_1 f1_2 f1_3 CosPhi1 CosPhi2 CosPhi3 Mode GndFltR f2 IoutDC1 IoutDC2 IoutDC3 V1to2 V2to3 V3to1 Pactive1 Pactive2 Pactive3 Papparent1 Papparent2 Papparent3 Preactive1 Preactive2 Preactive3 f5 f6 f7 Etotal_i L1")
+    "f1_1 f1_2 f1_3 CosPhi1 CosPhi2 CosPhi3 Mode GndFltR PowerLimit IoutDC1 IoutDC2 IoutDC3 V1to2 V2to3 V3to1 Pactive1 Pactive2 Pactive3 Papparent1 Papparent2 Papparent3 Preactive1 Preactive2 Preactive3 f5 f6 f7 Etotal_i L1")
 SEDataInverter3.size = 196
 SEDataInverter3.parse = classmethod(
     lambda cls, data, offset=0:
@@ -312,7 +312,7 @@ class PCAPParser:
         packet_offset -= tcpheaderlen-tcphdrlen
         data = f.read(ipdatalen-ipheaderlen-tcpheaderlen)  # This is the actual data.
         packet_offset -= ipdatalen-ipheaderlen-tcpheaderlen
-        if etherhdr[6:9] == "\x00\x27\x02":  # Inverter speaking.
+        if etherhdr[6:9] in ("\x00\x27\x02", "\x00\x40\x9d"):  # Inverter speaking.
 
           # Treat data gaps as loss if not filled within 60 seconds.
           self.give_up_gaps(pcaptime)
@@ -345,6 +345,8 @@ class PCAPParser:
         if packet_offset:
           f.read(packet_offset)
 
+      except GeneratorExit:
+        break
       except struct.error:
         eprint("Warning: file read error!")
         break

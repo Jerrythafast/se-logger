@@ -1,4 +1,4 @@
-VERSION 0.0.9
+VERSION 0.0.10
 
 ===============================================================================
 INSTALLATION INSTRUCTIONS
@@ -85,6 +85,13 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
 
 ===============================================================================
 CHANGELOG
+
+v0.0.10
+  - Added support for inverters connected using WiFi modules (DigiBoard MACs).
+  - Fixed a minor issue in liveupdate.py that caused Python to display an extra
+    warning if the service would crash.
+  - Added date and time to error messages in pvo-upload.log.
+  - The se-logger.service will now wait for mysql.service to start up.
 
 v0.0.9
  - Fixed silly warning about 'Data loss: 0 bytes'.

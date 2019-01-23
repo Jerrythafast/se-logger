@@ -1,6 +1,6 @@
 [Unit]
 Description=This service captures TCP traffic from SolarEdge inverters
-After=network.target
+After=network.target mysql.service
 
 [Service]
 ExecStart=/bin/bash /opt/se-logger/se-logger-service.sh

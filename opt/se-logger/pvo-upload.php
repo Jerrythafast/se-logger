@@ -1,5 +1,5 @@
 <?php
-//Version 0.0.9
+//Version 0.0.10
 //SETTINGS
 define("DB_HOST", "localhost");
 define("DB_NAME", "solaredge");
@@ -31,7 +31,7 @@ $q = $db->query(
   'WHERE timestamp > (SELECT pvo_last_live FROM live_update) ' .
   'LIMIT 100');
 if($q === false)
-  die("Could not get data!\n");
+  die(date("Y-m-d H:i:s  ") . "Could not get data!" . PHP_EOL);
 
 $lastdate = 0;
 $data = array();
@@ -64,7 +64,7 @@ curl_setopt_array($c, [
   ]
 ]);
 if(curl_exec($c) === false)
-  die("cURL error, exiting: " . curl_error($c) . "\n");
+  die(date("Y-m-d H:i:s  ") . "cURL error, exiting: " . curl_error($c) . PHP_EOL);
 
 $db->prepare("UPDATE live_update SET pvo_last_live = ?")->execute([$lastdate]);
 ?>
