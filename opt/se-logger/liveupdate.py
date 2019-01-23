@@ -7,6 +7,7 @@ inverter_private_key = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
 db_user = "dbuser"
 db_pass = "dbpassword"
 db_name = "solaredge"
+db_host = "localhost"
 
 
 
@@ -347,6 +348,52 @@ class PCAPParser:
 
 #############################################################################################
 
+class DBManager:
+  def __init__(self, user, passwd, db, host, retries=5):
+    self.retries = retries
+    while retries:
+      try:
+        self.conn = MySQLdb.connect(user=user, passwd=passwd, db=db, host=host)
+        self.cursor = self.conn.cursor()
+        retries = 0
+      except MySQLdb.Error as e:
+        retries -= 1
+        if not retries:
+          raise
+        eprint("Warning: Could not connect to database: %s; retrying..." % e)
+        time.sleep(1)
+
+  def execute(self, *args):
+    retries = self.retries
+    while 1:
+      try:
+        self.cursor.execute(*args)
+        return
+      except MySQLdb.OperationalError as e:
+        retries -= 1
+        if not retries:
+          raise
+        eprint("Warning: Connection to database failed: %s; retrying..." % e)
+        time.sleep(1)
+        self.conn.ping(True)
+
+  def fetchone(self):
+    return self.cursor.fetchone()
+
+  def commit(self):
+    try:
+      self.conn.commit()
+    except:
+      pass
+
+  def close(self):
+    try:
+      self.conn.close()
+    except:
+      pass
+
+#############################################################################################
+
 def parse0500(data):
   pos = 0
   while pos < len(data):
@@ -427,8 +474,7 @@ def eprint(message):
 
 
 # Connect to database and get last 0503 message.
-conn = MySQLdb.connect(user=db_user, passwd=db_pass, db=db_name)
-db = conn.cursor()
+db = DBManager(db_user, db_pass, db_name, db_host)
 db.execute("SELECT last_0503 FROM live_update")
 last_0503 = db.fetchone()[0]
 
@@ -445,7 +491,7 @@ for filename in sys.argv[1:]:
     if hdr[6] == 0x0503:
       eprint("Setting new 0503 key")
       db.execute("UPDATE live_update SET last_0503 = %s", (msg,))
-      conn.commit()
+      db.commit()
     if hdr[6] != 0x0500:
       continue
     updated = False
@@ -473,9 +519,9 @@ for filename in sys.argv[1:]:
         updated = True
     if updated:
       db.execute("UPDATE live_update SET last_telemetry = %s", (int(time.time()),))
-      conn.commit()
+      db.commit()
   f.close()
 
 eprint("End of file. Shutting down.")
-conn.close()
+db.close()
 

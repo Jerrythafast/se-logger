@@ -1,4 +1,4 @@
-VERSION 0.0.7
+VERSION 0.0.8
 
 ===============================================================================
 INSTALLATION INSTRUCTIONS
@@ -85,6 +85,11 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
 
 ===============================================================================
 CHANGELOG
+
+v0.0.8
+ - Auto-reconnect to the database if a timeout occurs, and retry connecting up
+   to 5 times.
+ - Added db_host configuration setting to liveupdate.py (default: 'localhost').
 
 v0.0.7
  - Added support for three-phase inverters.
