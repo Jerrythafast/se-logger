@@ -1,0 +1,12 @@
+[Unit]
+Description=This service captures TCP traffic from SolarEdge inverters
+After=network.target
+
+[Service]
+ExecStart=/bin/bash /opt/se-logger/se-logger-service.sh
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

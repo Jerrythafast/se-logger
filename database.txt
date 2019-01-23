@@ -1,0 +1,38 @@
+CREATE DATABASE solaredge;
+USE solaredge;
+
+CREATE TABLE telemetry_optimizers (
+	op_id       INT      UNSIGNED NOT NULL,
+	timestamp   INT      UNSIGNED NOT NULL,
+	v_in        SMALLINT UNSIGNED NOT NULL COMMENT '10bit steps of 0.125 V',
+	v_out       SMALLINT UNSIGNED NOT NULL COMMENT '10bit steps of 0.125 V',
+	i_in        SMALLINT UNSIGNED NOT NULL COMMENT '12bit steps of 0.00625 A',
+	e_day       SMALLINT UNSIGNED NOT NULL COMMENT '16bit steps of 0.25 Wh',
+	temperature TINYINT           NOT NULL COMMENT '8bit steps of 2 deg C',
+	PRIMARY KEY (timestamp, op_id)
+);
+
+CREATE TABLE telemetry_inverter (
+	inv_id      INT      UNSIGNED NOT NULL,
+	timestamp   INT      UNSIGNED NOT NULL,
+	temperature FLOAT             NOT NULL,
+	e_day       FLOAT             NOT NULL,
+	de_day      FLOAT             NOT NULL,
+	v_ac        FLOAT             NOT NULL,
+	i_ac        FLOAT             NOT NULL,
+	frequency   FLOAT             NOT NULL,
+	v_dc        FLOAT             NOT NULL,
+	e_total     INT      UNSIGNED NOT NULL,
+	i_rcd       FLOAT             NOT NULL,
+	mode        TINYINT  UNSIGNED NOT NULL,
+	p_active    FLOAT             NOT NULL,
+	p_apparent  FLOAT             NOT NULL,
+	p_reactive  FLOAT             NOT NULL,
+	PRIMARY KEY (timestamp, inv_id)
+);
+
+CREATE TABLE live_update (
+	pvo_last_live INT UNSIGNED NOT NULL,
+	last_0503     BINARY(34)   NOT NULL
+);
+INSERT INTO live_update (pvo_last_live, last_0503) VALUES (0, "\0");

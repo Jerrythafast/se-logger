@@ -1,0 +1,3 @@
+# m h  dom mon dow   command
+30 0 * * * /usr/sbin/service se-logger restart
+*/2 * * * * /usr/bin/php /opt/se-logger/pvo-upload.php >> /opt/se-logger/pvo-upload.log 2>&1
