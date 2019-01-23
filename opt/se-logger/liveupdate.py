@@ -212,28 +212,29 @@ class PCAPParser:
 
   def prune_silent_streams(self, pcaptime):
     for sid in self.tcp_streams.keys():
-      if pcaptime - self.tcp_streams[sid][2] > 3600:
+      if pcaptime - self.tcp_streams[sid][3] > 3600 or self.tcp_streams[sid][1] & 4:
         del self.tcp_streams[sid]
 
   def give_up_gaps(self, pcaptime):
     for sid in self.tcp_streams:
-      if len(self.tcp_streams[sid][1]) and pcaptime - min(self.tcp_streams[sid][1][x][2] for x in self.tcp_streams[sid][1]) >= 60:
+      if len(self.tcp_streams[sid][2]) and pcaptime - min(self.tcp_streams[sid][2][x][2] for x in self.tcp_streams[sid][2]) >= 60:
         # Could not close gap to out-of-order data within a minute, probably missed something!
-        newnext = min(self.tcp_streams[sid][1])
+        newnext = min(self.tcp_streams[sid][2])
         eprint("%08x  DATA LOSS %i bytes!" % (sid, newnext-self.tcp_streams[sid][0]))
         self.tcp_streams[sid][0] = newnext
 
   def get_out_of_order_bytes(self, pcaptime):
     for sid in self.tcp_streams:
-      while any(x <= self.tcp_streams[sid][0] for x in self.tcp_streams[sid][1]):
-        eprint("%08x  Gap closed after %f seconds" % (sid, pcaptime - min(self.tcp_streams[sid][1][x][2] for x in self.tcp_streams[sid][1])))
-        for y in (x for x in self.tcp_streams[sid][1].keys() if x <= self.tcp_streams[sid][0]):
-          for byte in self.tcp_streams[sid][1][y][0][self.tcp_streams[sid][0]-y:]:
+      while any(x <= self.tcp_streams[sid][0] for x in self.tcp_streams[sid][2]):
+        eprint("%08x  Gap closed after %f seconds" % (sid, pcaptime - min(self.tcp_streams[sid][2][x][2] for x in self.tcp_streams[sid][2])))
+        for y in (x for x in self.tcp_streams[sid][2].keys() if x <= self.tcp_streams[sid][0]):
+          for byte in self.tcp_streams[sid][2][y][0][self.tcp_streams[sid][0]-y:]:
             yield byte
-          self.tcp_streams[sid][0] = max(self.tcp_streams[sid][0], y + (1 if (self.tcp_streams[sid][1][y][1]&3) else len(self.tcp_streams[sid][1][y][0])))
-          self.tcp_streams[sid][2] = self.tcp_streams[sid][1][y][2]
-          del self.tcp_streams[sid][1][y]
-          if not len(self.tcp_streams[sid][1]):
+          self.tcp_streams[sid][0] = max(self.tcp_streams[sid][0], y + (1 if (self.tcp_streams[sid][2][y][1]&3) else len(self.tcp_streams[sid][2][y][0])))
+          self.tcp_streams[sid][1] = self.tcp_streams[sid][2][y][1]
+          self.tcp_streams[sid][3] = self.tcp_streams[sid][2][y][2]
+          del self.tcp_streams[sid][2][y]
+          if not len(self.tcp_streams[sid][2]):
             eprint("%08x  Stream is contiguous again" % sid)
 
   def get_data_from_pcap(self, f):
@@ -285,24 +286,25 @@ class PCAPParser:
           for byte in self.get_out_of_order_bytes(pcaptime):
             yield byte
 
-          # Discard streams that have been silent for one hour.
+          # Discard streams that have been silent for one hour or that have been reset.
           self.prune_silent_streams(pcaptime)
 
           # Identify new streams.
           if sid not in self.tcp_streams or tcpheader[4] & 2:
-            self.tcp_streams[sid] = [tcpheader[2], {}, pcaptime]
+            self.tcp_streams[sid] = [tcpheader[2], tcpheader[4], {}, pcaptime]
 
           # Immediately write bytes if they are received in order.
           if self.tcp_streams[sid][0] >= tcpheader[2]:
             for byte in data[self.tcp_streams[sid][0]-tcpheader[2]:]:
               yield byte
             self.tcp_streams[sid][0] = tcpheader[2] + (1 if (tcpheader[4]&3) else len(data))
-            self.tcp_streams[sid][2] = pcaptime
+            self.tcp_streams[sid][1] = tcpheader[4]
+            self.tcp_streams[sid][3] = pcaptime
 
           # Store out-of-order segments; we'll write them when the gap is closed.
           else:
             eprint("%08x  Out of order packet! SEQ=%08x expect=%08x (Gap size %i)" % (sid, tcpheader[2], self.tcp_streams[sid][0], tcpheader[2]-self.tcp_streams[sid][0]))
-            self.tcp_streams[sid][1][tcpheader[2]] = [data, tcpheader[4], pcaptime]
+            self.tcp_streams[sid][2][tcpheader[2]] = [data, tcpheader[4], pcaptime]
 
         # There may be some remaining padding bytes after the data; skip that.
         f.read(pcaprechdr[2]-ipdatalen-etherhdrlen)

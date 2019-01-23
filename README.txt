@@ -1,4 +1,4 @@
-VERSION 0.0.3
+VERSION 0.0.4
 
 ===============================================================================
 INSTALLATION INSTRUCTIONS
@@ -60,6 +60,10 @@ commands used.  Tested with Ubuntu 16.04, MySQL 5.7.12, PHP 7.0.
 
 ===============================================================================
 CHANGELOG
+
+v0.0.4
+ - liveupdate.py will no longer try to fill gaps in TCP streams that have been
+   terminated by the RST flag.
 
 v0.0.3
  - Added 'uptime' column to the 'telemetry_optimizers' database table.  This is
