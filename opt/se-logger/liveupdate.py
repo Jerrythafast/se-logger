@@ -23,7 +23,7 @@
 import struct, sys, MySQLdb, time
 from collections import namedtuple
 
-__version__ = "0.0.11"
+__version__ = "0.0.12"
 
 # SETTINGS
 inverter_private_key = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -284,8 +284,10 @@ class PCAPParser:
     tcphdrlen = 20    # Has a 'header length' value that may indicate additional optional values.
 
     # Check PCAP file header.
-    if f.read(pcaphdrlen)[:4] != "\xD4\xC3\xB2\xA1":
-      eprint("ERROR! PCAP format not supported! Can only read little-endian PCAP files with microsecond precision!")
+    try:
+      byteorder = {"\xD4\xC3\xB2\xA1": "<", "\xA1\xB2\xC3\xD4": ">"}[f.read(pcaphdrlen)[:4]]
+    except KeyError:
+      eprint("ERROR! PCAP format not supported! Can only read PCAP files with microsecond precision!")
       return
 
     while True:
@@ -295,7 +297,7 @@ class PCAPParser:
         pcaprechdr = f.read(pcaprechdrlen)
         if not pcaprechdr:
           break
-        pcaprechdr = struct.unpack("<LLLL", pcaprechdr)
+        pcaprechdr = struct.unpack(byteorder + "LLLL", pcaprechdr)
         pcaptime = pcaprechdr[0] + pcaprechdr[1]/1000000.
         packet_offset = pcaprechdr[2]
 

@@ -1,4 +1,4 @@
-VERSION 0.0.11
+VERSION 0.0.12
 
 ===============================================================================
 INSTALLATION INSTRUCTIONS
@@ -85,6 +85,9 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
 
 ===============================================================================
 CHANGELOG
+
+v0.0.12
+  - Added support for PCAP files with big-endian byte order.
 
 v0.0.11
   - Added is-pcap-encrypted.py for checking whether any encryption is already
