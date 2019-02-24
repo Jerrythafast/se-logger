@@ -1,4 +1,4 @@
-VERSION 0.0.12
+VERSION 0.0.13
 
 ===============================================================================
 INSTALLATION INSTRUCTIONS
@@ -85,6 +85,9 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
 
 ===============================================================================
 CHANGELOG
+
+v0.0.13
+  - Fixed detection of VLAN-tagged Ethernet frames.
 
 v0.0.12
   - Added support for PCAP files with big-endian byte order.

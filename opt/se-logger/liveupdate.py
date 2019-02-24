@@ -23,7 +23,7 @@
 import struct, sys, MySQLdb, time
 from collections import namedtuple
 
-__version__ = "0.0.12"
+__version__ = "0.0.13"
 
 # SETTINGS
 inverter_private_key = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -306,9 +306,8 @@ class PCAPParser:
         packet_offset -= etherhdrlen
         ethertype = etherhdr[12:14]
         if ethertype == "\x81\x00":
-          f.read(4)
+          ethertype = f.read(4)[2:]
           packet_offset -= 4
-          ethertype = etherhdr[16:18]
         if ethertype != "\x08\x00":
           # Not IPv4 packet, skip this.
           # TODO: IPv6 support.
