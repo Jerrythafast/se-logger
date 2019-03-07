@@ -22,18 +22,9 @@
 
 import struct, sys, MySQLdb, time
 from collections import namedtuple
+from config import db_user, db_pass, db_name, db_host, db_port, inverter_private_key
 
 __version__ = "0.0.13"
-
-# SETTINGS
-inverter_private_key = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-db_user = "dbuser"
-db_pass = "dbpassword"
-db_name = "solaredge"
-db_host = "localhost"
-db_port = 3306
-
-
 
 #############################################################################################
 
