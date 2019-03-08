@@ -24,7 +24,7 @@
 # Copy this file to config.py and change below settings
 
 # SETTINGS
-#inverter_private_key = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+inverter_private_key = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 db_user = "dbuser"
 db_pass = "dbpassword"
 db_name = "solaredge"
