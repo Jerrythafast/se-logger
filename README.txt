@@ -34,13 +34,13 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
     and run it.  You may need to install the python-serial system package
     (PySerial) first.
 
- 5. Open 'liveupdate.py' in a text editor and enter your database username and
-    password as well as the encryption key of your inverter in the SETTINGS
-    area at the top of the script.  If your inverter is newly installed and
-    the solaredge-logger will be running from the first day it is connected to
-    the internet, you may not need an encryption key the first day - just leave
-    it at the default value for now.  You'll know that it started encrypting
-    the data when the data stops updating.  Refer to #11 when that happens.
+ 5. Copy the config-sample.py file to config.py and use a text editor to update
+    your database username and password as well as the encryption key of your
+    inverter If your inverter is newly installed and the solaredge-logger will
+    be running from the first day it is connected to the internet, you may not
+    need an encryption key the first day - just leave it at the default value
+    for now.  You'll know that it started encrypting the data when the data
+    stops updating.  Refer to #11 when that happens.
 
  6. Open 'pvo-upload.php' in a text editor and enter your database username and
     password as well as the PVOutput API key and System ID in the SETTINGS area
