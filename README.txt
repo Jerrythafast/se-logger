@@ -1,4 +1,19 @@
-VERSION 0.0.13
+VERSION 0.0.14
+
+===============================================================================
+INTRODUCTION
+This project implements a background service that listens on a network port for
+communication from SolarEdge inverters, to extract the power production data
+(telemetry) from it.  The captured data is stored in a MySQL database.  A PHP
+script is included to upload it to [PvOutput](https://pvoutput.org).  Another
+project implementing a website to visualise the data is
+[available here](https://github.com/amrij/zonnepanelen).
+
+**Please note:** This project _does not work_ with recent SolarEdge inverter
+models with SetApp.  You can only use se-logger with inverter models that have
+a built-in display.  The more recent inverters can be monitored using
+[solaredge-local](https://github.com/drobtravels/solaredge-local).
+
 
 ===============================================================================
 INSTALLATION INSTRUCTIONS
@@ -14,6 +29,7 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
     php-curl
     python-mysqldb
     python-crypto
+    tcpdump
 
  2. Set up the database tables using the SQL statements in 'database.txt'.
 
@@ -36,11 +52,11 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
 
  5. Copy the config-sample.py file to config.py and use a text editor to update
     your database username and password as well as the encryption key of your
-    inverter If your inverter is newly installed and the solaredge-logger will
-    be running from the first day it is connected to the internet, you may not
-    need an encryption key the first day - just leave it at the default value
-    for now.  You'll know that it started encrypting the data when the data
-    stops updating.  Refer to #11 when that happens.
+    inverter.  If your inverter is newly installed and the solaredge-logger
+    will be running from the first day it is connected to the internet, you may
+    not need an encryption key the first day - just leave it at the default
+    value for now.  You'll know that it started encrypting the data when the
+    data stops updating.  Refer to #11 when that happens.
 
  6. Open 'pvo-upload.php' in a text editor and enter your database username and
     password as well as the PVOutput API key and System ID in the SETTINGS area
@@ -85,6 +101,10 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
 
 ===============================================================================
 CHANGELOG
+
+v0.0.14
+  - Moved settings out of liveupdate.py to a separate file (thanks @mirakels).
+  - Added support for more single-phase inverter firmware versions.
 
 v0.0.13
   - Fixed detection of VLAN-tagged Ethernet frames.

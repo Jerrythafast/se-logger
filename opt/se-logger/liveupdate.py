@@ -24,7 +24,7 @@ import struct, sys, MySQLdb, time
 from collections import namedtuple
 from config import db_user, db_pass, db_name, db_host, db_port, inverter_private_key
 
-__version__ = "0.0.13"
+__version__ = "0.0.14"
 
 #############################################################################################
 
@@ -429,7 +429,7 @@ def parse0500(data):
         'e_day': bytes[6] | (bytes[7] << 8),
         'temperature': (bytes[8] | ~0xFF) if bytes[8] & 0x80 else bytes[8]
       }
-    elif type == 0x0010 and length in (124, 174, 180):  # 1ph inverter
+    elif type == 0x0010 and length in (124, 174, 180, 186):  # 1ph inverter
       inv = SEDataInverter1.parse(data, pos + 12)
       yield {
         'inv_id':       id & ~0x00800000,
