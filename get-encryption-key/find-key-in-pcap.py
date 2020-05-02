@@ -52,14 +52,14 @@ Finding: (** = checksum of packet, __ = bytes of key)
 6   12 34 56 79 02 00 fd ff mm nn fd ff ff ff ss tt uu vv 12 00 3c 02 ** **
 7   12 34 56 79 06 00 f9 ff mm nn ss tt uu vv fd ff ff ff 90 00 __ __ __ __ 00 00 ** **
 """
-BARKER = "\x12\x34\x56\x79"
-LEN1 = "\x02\x00\xfd\xff"
-LEN2 = "\x06\x00\xf9\xff"
-ID1 = "\xfd\xff\xff\xff"
-CMD1 = "\x12\x00"
-CMD2 = "\x90\x00"
-PARAMS = ("\x39\x02", "\x3a\x02", "\x3b\x02", "\x3c\x02")
-PTYPE = "\x00\x00"
+BARKER = b"\x12\x34\x56\x79"
+LEN1 = b"\x02\x00\xfd\xff"
+LEN2 = b"\x06\x00\xf9\xff"
+ID1 = b"\xfd\xff\xff\xff"
+CMD1 = b"\x12\x00"
+CMD2 = b"\x90\x00"
+PARAMS = (b"\x39\x02", b"\x3a\x02", b"\x3b\x02", b"\x3c\x02")
+PTYPE = b"\x00\x00"
 
 seq = ""
 id2 = ""
