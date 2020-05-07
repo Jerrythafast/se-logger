@@ -98,5 +98,6 @@ def getKeyPart(conn, seq, inverter_id):
 
 connection = serial.Serial(port=serial_port, baudrate=115200, timeout=0)
 print("     |  BARKER   | LEN |LEN_I| SEQ |  SOURCE   |   DEST    | CMD |DATA")
-print("Your key is '" + "".join(b"\\x%02x" % ord(chr(x)) for i in range(4) for x in
+print("Your key is '" + "".join("\\x%02x" % x for i in range(4) for x in
+
     getKeyPart(connection, i+1, inverter_id)) + "'")
