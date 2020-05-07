@@ -123,9 +123,8 @@ class SEDecrypt:
 
         Returns a tuple(int(sequenceNumber), string(data)).
         """
-        rand1 = list(map(lambda x: ord(chr(x)), msg003d[0:16]))
-        rand = list(map(lambda x: ord(chr(x)), self.cipher.encrypt(msg003d[0:16])))
-        msg003d = list(map(lambda x: ord(chr(x)), msg003d))
+        rand1 = msg003d[0:16]
+        rand = self.cipher.encrypt(bytes(msg003d[0:16]))
         posa = 0
         posb = 16
         while posb < len(msg003d):
