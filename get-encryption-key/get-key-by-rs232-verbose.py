@@ -91,7 +91,8 @@ def getKeyPart(conn, seq, inverter_id):
     conn.flush()
     time.sleep(1)
     received = conn.read(10000)
-    print("RECV: %s" % " ".join("%02x" % ord(chr(x)) for x in received))
+    print("RECV: %s" % " ".join("%02x" % x for x in received))
+
     return received[-8:-4]
 
 
