@@ -163,7 +163,7 @@ class SEParser:
         data.append(byte)
         if state == 0:
           # Skipping to next barker.
-          if len(data) >= 4 and bytes(data) == b"\x12\x34\x56\x79":
+          if len(data) >= 4 and bytes(data[-4:]) == b"\x12\x34\x56\x79":
             state = 1
             if len(data) > 4:
               eprint("Warning! Skipping %i mysterious bytes!" % (len(data)-4))
