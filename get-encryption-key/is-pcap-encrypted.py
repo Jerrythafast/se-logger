@@ -54,7 +54,8 @@ for filename in (x for x in sys.argv[1:] for x in iglob(x)):
     if pos == -1 or pos > len(data) - 20:
       break
     packets += 1
-    if ord(chr(data[pos+18])) + (ord(chr(data[pos+19])) << 8) in (0x0503, 0x003d):
+    if data[pos+18] + (data[pos+19] << 8) in (0x0503, 0x003d):
+
       encrypted += 1
 
 if not packets:
