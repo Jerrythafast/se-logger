@@ -114,10 +114,8 @@ class SEDecrypt:
                  parameters 0239, 023a, 023b, and 023c.
         msg0503: a 34-byte string with the contents of a 0503 message.
         """
-        enkey1 = list(map(lambda x: ord(chr(x)), AES.new(key, AES.MODE_ECB).encrypt(msg0503[0:16])))
-        if len(enkey1) == 0:
-            return
-        self.cipher = AES.new(bytes(enkey1[i] ^ ord(chr(msg0503[i+16])) for i in range(16)), AES.MODE_ECB)
+        enkey1 = AES.new(key, mode=AES.MODE_ECB).encrypt(bytes(msg0503[0:16]))
+        self.cipher = AES.new(bytes(enkey1[i] ^ msg0503[i+16] for i in range(16)), mode=AES.MODE_ECB)
 
     def decrypt(self, msg003d):
         """
