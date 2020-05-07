@@ -128,7 +128,7 @@ class SEDecrypt:
         posa = 0
         posb = 16
         while posb < len(msg003d):
-            msg003d[posb] ^= list(rand[posa])
+            msg003d[posb] ^= rand[posa]
             posb += 1
             posa += 1
             if posa == 16:
