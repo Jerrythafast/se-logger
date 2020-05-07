@@ -170,7 +170,7 @@ class SEParser:
             state = 1
             if len(data) > 4:
               eprint("Warning! Skipping %i mysterious bytes!" % (len(data)-4))
-              eprint(" ".join("%02x" % ord(chr(x)) for x in data[:-4]))
+              eprint(" ".join("%02x" % x for x in data[:-4]))
               data = data[-4:]
         elif state == 1:
           # Reading length.
@@ -545,4 +545,3 @@ for filename in sys.argv[1:]:
 
 eprint("End of file. Shutting down.")
 db.close()
-
