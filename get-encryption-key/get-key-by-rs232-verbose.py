@@ -86,7 +86,8 @@ def getKeyPart(conn, seq, inverter_id):
         calcCrc(
             struct.pack(">HLLH", seq, 0xfffffffd, inverter_id, 18) +
             struct.pack("<H", 0x238 + seq)))
-    print("SEND: %s" % " ".join("%02x" % ord(chr(x)) for x in to_send))
+    print("SEND: %s" % " ".join("%02x" % x for x in to_send))
+
     conn.write(to_send)
     conn.flush()
     time.sleep(1)
