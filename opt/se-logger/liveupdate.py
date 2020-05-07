@@ -66,7 +66,7 @@ crcTable = (
 def calcCrc(data):
     crc = 0x5a5a
     for d in data:
-         crc = crcTable[(crc ^ ord(chr(d))) & 0xff] ^ (crc >> 8)
+         crc = crcTable[(crc ^ d) & 0xff] ^ (crc >> 8)
     return crc
 
 #############################################################################################
