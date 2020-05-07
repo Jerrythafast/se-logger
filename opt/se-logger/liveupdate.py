@@ -233,7 +233,7 @@ class SEParser:
             state = 0
     if len(data):
       eprint("Warning! Got %i mysterious bytes left! (state=%i)" % (len(data), state))
-      eprint(" ".join("%02x" % ord(chr(x)) for x in data))
+      eprint(" ".join("%02x" % x for x in data))
 
 #############################################################################################
 
