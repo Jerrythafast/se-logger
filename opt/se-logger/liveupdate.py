@@ -139,8 +139,8 @@ class SEDecrypt:
                         break
                 rand = self.cipher.encrypt(bytes(rand1))
         return (msg003d[16] + (msg003d[17] << 8),
-                bytes(map(chr, (msg003d[i+22] ^ msg003d[18+(i&3)]
-                    for i in range(len(msg003d)-22)))))
+                bytes(msg003d[i+22] ^ msg003d[18+(i&3)]
+                    for i in range(len(msg003d)-22)))
 
 #############################################################################################
 
