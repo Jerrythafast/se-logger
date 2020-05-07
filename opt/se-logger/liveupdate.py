@@ -420,7 +420,7 @@ def parse0500(data):
   while pos < len(data):
     type, id, length, timestamp = struct.unpack("<HLHL", data[pos:pos+12])
     if type == 0x0080 and length == 13:  # Optimizer data (packed)
-      bytes = list(map(lambda x: ord(chr(x)), data[pos+12:pos+8+length]))
+      bytes = data[pos + 12 : pos + 8 + length]
       yield {
         'op_id': id,
         'timestamp': timestamp,
