@@ -259,7 +259,7 @@ class PCAPParser:
     for sid in self.tcp_streams:
       while any(x <= self.tcp_streams[sid][0] for x in self.tcp_streams[sid][2]):
         eprint("%08x  Gap closed after %f seconds" % (sid, pcaptime - min(self.tcp_streams[sid][2][x][2] for x in self.tcp_streams[sid][2])))
-        for y in (x for x in self.tcp_streams[sid][2].keys() if x <= self.tcp_streams[sid][0]):
+        for y in (x for x in list(self.tcp_streams[sid][2]) if x <= self.tcp_streams[sid][0]):
           for byte in self.tcp_streams[sid][2][y][0][self.tcp_streams[sid][0]-y:]:
             yield byte
           self.tcp_streams[sid][0] = max(self.tcp_streams[sid][0], y + (1 if (self.tcp_streams[sid][2][y][1]&3) else len(self.tcp_streams[sid][2][y][0])))
