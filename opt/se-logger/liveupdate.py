@@ -66,7 +66,7 @@ crcTable = (
 def calcCrc(data):
     crc = 0x5a5a
     for d in data:
-         crc = crcTable[(crc ^ ord(chr(d))) & 0xff] ^ (crc >> 8)
+         crc = crcTable[(crc ^ d) & 0xff] ^ (crc >> 8)
     return crc
 
 #############################################################################################
@@ -114,10 +114,8 @@ class SEDecrypt:
                  parameters 0239, 023a, 023b, and 023c.
         msg0503: a 34-byte string with the contents of a 0503 message.
         """
-        enkey1 = list(map(lambda x: ord(chr(x)), AES.new(key, AES.MODE_ECB).encrypt(msg0503[0:16])))
-        if len(enkey1) == 0:
-            return
-        self.cipher = AES.new(bytes(enkey1[i] ^ ord(chr(msg0503[i+16])) for i in range(16)), AES.MODE_ECB)
+        enkey1 = AES.new(key, mode=AES.MODE_ECB).encrypt(bytes(msg0503[0:16]))
+        self.cipher = AES.new(bytes(enkey1[i] ^ msg0503[i+16] for i in range(16)), mode=AES.MODE_ECB)
 
     def decrypt(self, msg003d):
         """
@@ -125,13 +123,12 @@ class SEDecrypt:
 
         Returns a tuple(int(sequenceNumber), string(data)).
         """
-        rand1 = list(map(lambda x: ord(chr(x)), msg003d[0:16]))
-        rand = list(map(lambda x: ord(chr(x)), self.cipher.encrypt(msg003d[0:16])))
-        msg003d = list(map(lambda x: ord(chr(x)), msg003d))
+        rand1 = msg003d[0:16]
+        rand = self.cipher.encrypt(bytes(msg003d[0:16]))
         posa = 0
         posb = 16
         while posb < len(msg003d):
-            msg003d[posb] ^= list(rand[posa])
+            msg003d[posb] ^= rand[posa]
             posb += 1
             posa += 1
             if posa == 16:
@@ -140,10 +137,10 @@ class SEDecrypt:
                     rand1[posc] = (rand1[posc] + 1) & 0x0FF
                     if rand1[posc]:
                         break
-                rand = map(lambda x: ord(chr(x)), self.cipher.encrypt(bytes(rand1)))
+                rand = self.cipher.encrypt(bytes(rand1))
         return (msg003d[16] + (msg003d[17] << 8),
-                bytes(map(chr, (msg003d[i+22] ^ msg003d[18+(i&3)]
-                    for i in range(len(msg003d)-22)))))
+                bytes(msg003d[i+22] ^ msg003d[18+(i&3)]
+                    for i in range(len(msg003d)-22)))
 
 #############################################################################################
 
@@ -166,11 +163,11 @@ class SEParser:
         data.append(byte)
         if state == 0:
           # Skipping to next barker.
-          if len(data) >= 4 and bytes(data) == b"\x12\x34\x56\x79":
+          if len(data) >= 4 and bytes(data[-4:]) == b"\x12\x34\x56\x79":
             state = 1
             if len(data) > 4:
               eprint("Warning! Skipping %i mysterious bytes!" % (len(data)-4))
-              eprint(" ".join("%02x" % ord(chr(x)) for x in data[:-4]))
+              eprint(" ".join("%02x" % x for x in data[:-4]))
               data = data[-4:]
         elif state == 1:
           # Reading length.
@@ -208,7 +205,7 @@ class SEParser:
         elif state == 8:
           # Reading message checksum.
           if len(data) == 20 + length + 2:
-            data = bytes(data)
+            data = byterray(data)
             hdr = struct.unpack("<LHHHLLH", data[:20])
             # Check the checksum.
             if struct.unpack("<H", data[-2:])[0] != calcCrc(
@@ -233,7 +230,7 @@ class SEParser:
             state = 0
     if len(data):
       eprint("Warning! Got %i mysterious bytes left! (state=%i)" % (len(data), state))
-      eprint(" ".join("%02x" % ord(chr(x)) for x in data))
+      eprint(" ".join("%02x" % x for x in data))
 
 #############################################################################################
 
@@ -420,7 +417,7 @@ def parse0500(data):
   while pos < len(data):
     type, id, length, timestamp = struct.unpack("<HLHL", data[pos:pos+12])
     if type == 0x0080 and length == 13:  # Optimizer data (packed)
-      bytes = list(map(lambda x: ord(chr(x)), data[pos+12:pos+8+length]))
+      bytes = data[pos + 12 : pos + 8 + length]
       yield {
         'op_id': id,
         'timestamp': timestamp,
@@ -545,4 +542,3 @@ for filename in sys.argv[1:]:
 
 eprint("End of file. Shutting down.")
 db.close()
-
