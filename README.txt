@@ -20,15 +20,15 @@ INSTALLATION INSTRUCTIONS
 
 These instructions may assume working knowledge of managing Linux systems and
 MySQL databases.  You may need to be root (i.e., 'sudo') for some of the
-commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
+commands used.  Tested with Ubuntu 16.04, Python 3.5+, MySQL 5.7.12, PHP 7.0.
 
  1. Install the required system packages:
     mysql-server
     php-cli
     php-mysql
     php-curl
-    python-mysqldb
-    python-crypto
+    python3-mysqldb
+    python3-crypto
     tcpdump
 
  2. Set up the database tables using the SQL statements in 'database.txt'.
@@ -47,7 +47,7 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
     inverter first over an RS232 or USB serial connection with the
     'get-key-by-rs232.py' script.  To use it, enter your inverter's serial
     number and the name of the serial port in the SETTINGS area of the script
-    and run it.  You may need to install the python-serial system package
+    and run it.  You may need to install the python3-serial system package
     (PySerial) first.
 
  5. Copy the config-sample.py file to config.py and use a text editor to update
@@ -92,7 +92,7 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
     can find the encryption key in the 'solaredge-###.pcap' files in the
     '/opt/se-logger' directory by using the 'find-key-in-pcap.py' script.  When
     found, update 'liveupdate.py' with your encryption key.  Then, run
-    'python liveupdate.py *.pcap' to update the database and run
+    'python3 liveupdate.py *.pcap' to update the database and run
     'systemctl restart se-logger' to restart the service to keep it updated.
 
 12. If anything fails to work, you may find error messages in various log files
@@ -103,7 +103,7 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
 CHANGELOG
 
 v0.0.15
-  - Converted to Python3  
+  - Converted to Python3 (thanks @Expaso).
 
 v0.0.14
   - Moved settings out of liveupdate.py to a separate file (thanks @mirakels).
