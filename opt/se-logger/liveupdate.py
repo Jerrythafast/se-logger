@@ -2,7 +2,7 @@
 #xpylint: disable=no-member
 
 #
-# Copyright (C) 2019 Jerrythafast
+# Copyright (C) 2020 Jerrythafast
 #
 # This file is part of se-logger, which captures telemetry data from
 # the TCP traffic of SolarEdge PV inverters.
