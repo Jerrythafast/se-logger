@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright (C) 2019 Jerrythafast
+# Copyright (C) 2020 Jerrythafast
 #
 # This file is part of se-logger, which captures telemetry data from
 # the TCP traffic of SolarEdge PV inverters.
@@ -40,4 +40,4 @@ done
 
 /usr/bin/stdbuf -i0 -o0 -e0 /usr/sbin/tcpdump -i $INTERFACE -U -w - ${FILTER} 2>> ${CAPTDIR}tcpdump.log | \
 	tee $CAPTDIR$PREFIX`date -u +%Y%m%d%H%M%S`.pcap | \
-	/usr/bin/python -u ${CAPTDIR}liveupdate.py - 2>> ${CAPTDIR}liveupdate.log
+	/usr/bin/python3 -u ${CAPTDIR}liveupdate.py - 2>> ${CAPTDIR}liveupdate.log
