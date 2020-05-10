@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+#xpylint: disable=no-member
 
 #
 # Copyright (C) 2019 Jerrythafast
@@ -24,7 +25,7 @@ import struct, sys, MySQLdb, time
 from collections import namedtuple
 from config import db_user, db_pass, db_name, db_host, db_port, inverter_private_key
 
-__version__ = "0.0.14"
+__version__ = "0.0.15"
 
 #############################################################################################
 
@@ -65,7 +66,7 @@ crcTable = (
 def calcCrc(data):
     crc = 0x5a5a
     for d in data:
-         crc = crcTable[(crc ^ ord(d)) & 0xff] ^ (crc >> 8)
+         crc = crcTable[(crc ^ d) & 0xff] ^ (crc >> 8)
     return crc
 
 #############################################################################################
@@ -113,9 +114,8 @@ class SEDecrypt:
                  parameters 0239, 023a, 023b, and 023c.
         msg0503: a 34-byte string with the contents of a 0503 message.
         """
-        enkey1 = map(ord, AES.new(key).encrypt(msg0503[0:16]))
-        self.cipher = AES.new("".join(map(chr,
-            (enkey1[i] ^ ord(msg0503[i+16]) for i in range(16)))))
+        enkey1 = AES.new(key, mode=AES.MODE_ECB).encrypt(bytes(msg0503[0:16]))
+        self.cipher = AES.new(bytes(enkey1[i] ^ msg0503[i+16] for i in range(16)), mode=AES.MODE_ECB)
 
     def decrypt(self, msg003d):
         """
@@ -123,9 +123,8 @@ class SEDecrypt:
 
         Returns a tuple(int(sequenceNumber), string(data)).
         """
-        rand1 = map(ord, msg003d[0:16])
-        rand = map(ord, self.cipher.encrypt(msg003d[0:16]))
-        msg003d = map(ord, msg003d)
+        rand1 = msg003d[0:16]
+        rand = self.cipher.encrypt(bytes(msg003d[0:16]))
         posa = 0
         posb = 16
         while posb < len(msg003d):
@@ -138,10 +137,10 @@ class SEDecrypt:
                     rand1[posc] = (rand1[posc] + 1) & 0x0FF
                     if rand1[posc]:
                         break
-                rand = map(ord, self.cipher.encrypt("".join(map(chr, rand1))))
+                rand = self.cipher.encrypt(bytes(rand1))
         return (msg003d[16] + (msg003d[17] << 8),
-                "".join(map(chr, (msg003d[i+22] ^ msg003d[18+(i&3)]
-                    for i in range(len(msg003d)-22)))))
+                bytes(msg003d[i+22] ^ msg003d[18+(i&3)]
+                    for i in range(len(msg003d)-22)))
 
 #############################################################################################
 
@@ -164,25 +163,25 @@ class SEParser:
         data.append(byte)
         if state == 0:
           # Skipping to next barker.
-          if len(data) >= 4 and "".join(data[-4:]) == "\x12\x34\x56\x79":
+          if len(data) >= 4 and bytes(data[-4:]) == b"\x12\x34\x56\x79":
             state = 1
             if len(data) > 4:
               eprint("Warning! Skipping %i mysterious bytes!" % (len(data)-4))
-              eprint(" ".join("%02x" % ord(x) for x in data[:-4]))
+              eprint(" ".join("%02x" % x for x in data[:-4]))
               data = data[-4:]
         elif state == 1:
           # Reading length.
           if len(data) == 6:
             state = 2
-            length = struct.unpack("<H", "".join(data[-2:]))[0]
+            length = struct.unpack("<H", bytes(data[-2:]))[0]
         elif state == 2:
           # Reading length inverted.
           if len(data) == 8:
             state = 3
-            if ((~struct.unpack("<H", "".join(data[-2:]))[0]) & 0xFFFF) != length:
+            if ((~struct.unpack("<H", bytes(data[-2:]))[0]) & 0xFFFF) != length:
               eprint("Warning! Length value mismatch! Skipping over barker...")
               data = data[4:]
-              state = 1 if "".join(data) == "\x12\x34\x56\x79" else 0
+              state = 1 if bytes(data) == b"\x12\x34\x56\x79" else 0
         elif state == 3:
           # Reading sequence number.
           if len(data) == 10:
@@ -206,7 +205,7 @@ class SEParser:
         elif state == 8:
           # Reading message checksum.
           if len(data) == 20 + length + 2:
-            data = "".join(data)
+            data = byterray(data)
             hdr = struct.unpack("<LHHHLLH", data[:20])
             # Check the checksum.
             if struct.unpack("<H", data[-2:])[0] != calcCrc(
@@ -231,7 +230,7 @@ class SEParser:
             state = 0
     if len(data):
       eprint("Warning! Got %i mysterious bytes left! (state=%i)" % (len(data), state))
-      eprint(" ".join("%02x" % ord(x) for x in data))
+      eprint(" ".join("%02x" % x for x in data))
 
 #############################################################################################
 
@@ -240,7 +239,7 @@ class PCAPParser:
     self.tcp_streams = {}
 
   def prune_silent_streams(self, pcaptime):
-    for sid in self.tcp_streams.keys():
+    for sid in list(self.tcp_streams):
       if pcaptime - self.tcp_streams[sid][3] > 3600 or self.tcp_streams[sid][1] & 4:
         del self.tcp_streams[sid]
 
@@ -257,7 +256,7 @@ class PCAPParser:
     for sid in self.tcp_streams:
       while any(x <= self.tcp_streams[sid][0] for x in self.tcp_streams[sid][2]):
         eprint("%08x  Gap closed after %f seconds" % (sid, pcaptime - min(self.tcp_streams[sid][2][x][2] for x in self.tcp_streams[sid][2])))
-        for y in (x for x in self.tcp_streams[sid][2].keys() if x <= self.tcp_streams[sid][0]):
+        for y in (x for x in list(self.tcp_streams[sid][2]) if x <= self.tcp_streams[sid][0]):
           for byte in self.tcp_streams[sid][2][y][0][self.tcp_streams[sid][0]-y:]:
             yield byte
           self.tcp_streams[sid][0] = max(self.tcp_streams[sid][0], y + (1 if (self.tcp_streams[sid][2][y][1]&3) else len(self.tcp_streams[sid][2][y][0])))
@@ -276,7 +275,7 @@ class PCAPParser:
 
     # Check PCAP file header.
     try:
-      byteorder = {"\xD4\xC3\xB2\xA1": "<", "\xA1\xB2\xC3\xD4": ">"}[f.read(pcaphdrlen)[:4]]
+      byteorder = {b"\xD4\xC3\xB2\xA1": "<", b"\xA1\xB2\xC3\xD4": ">"}[f.read(pcaphdrlen)[:4]]
     except KeyError:
       eprint("ERROR! PCAP format not supported! Can only read PCAP files with microsecond precision!")
       return
@@ -296,10 +295,10 @@ class PCAPParser:
         etherhdr = f.read(etherhdrlen)
         packet_offset -= etherhdrlen
         ethertype = etherhdr[12:14]
-        if ethertype == "\x81\x00":
+        if ethertype == b"\x81\x00":
           ethertype = f.read(4)[2:]
           packet_offset -= 4
-        if ethertype != "\x08\x00":
+        if ethertype != b"\x08\x00":
           # Not IPv4 packet, skip this.
           # TODO: IPv6 support.
           f.read(packet_offset)
@@ -326,7 +325,7 @@ class PCAPParser:
         packet_offset -= tcpheaderlen-tcphdrlen
         data = f.read(ipdatalen-ipheaderlen-tcpheaderlen)  # This is the actual data.
         packet_offset -= ipdatalen-ipheaderlen-tcpheaderlen
-        if etherhdr[6:9] in ("\x00\x27\x02", "\x00\x40\x9d", "\x00\x04\xf3"):  # Inverter speaking.
+        if etherhdr[6:9] in (b"\x00\x27\x02", b"\x00\x40\x9d", b"\x00\x04\xf3"):  # Inverter speaking.
 
           # Treat data gaps as loss if not filled within 60 seconds.
           self.give_up_gaps(pcaptime)
@@ -418,7 +417,7 @@ def parse0500(data):
   while pos < len(data):
     type, id, length, timestamp = struct.unpack("<HLHL", data[pos:pos+12])
     if type == 0x0080 and length == 13:  # Optimizer data (packed)
-      bytes = map(ord, data[pos+12:pos+8+length])
+      bytes = data[pos + 12 : pos + 8 + length]
       yield {
         'op_id': id,
         'timestamp': timestamp,
@@ -543,4 +542,3 @@ for filename in sys.argv[1:]:
 
 eprint("End of file. Shutting down.")
 db.close()
-

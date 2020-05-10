@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 # Copyright (C) 2019 Jerrythafast
@@ -77,7 +77,8 @@ crcTable = (
 def calcCrc(data):
     crc = 0x5a5a    # initial value
     for d in data:
-         crc = crcTable[(crc ^ ord(d)) & 0xff] ^ (crc >> 8)
+         crc = crcTable[(crc ^ d) & 0xff] ^ (crc >> 8)
+
     return crc
 
 def getKeyPart(conn, seq, inverter_id):
@@ -86,16 +87,19 @@ def getKeyPart(conn, seq, inverter_id):
         calcCrc(
             struct.pack(">HLLH", seq, 0xfffffffd, inverter_id, 18) +
             struct.pack("<H", 0x238 + seq)))
-    print("SEND: %s" % " ".join("%02x" % ord(x) for x in to_send))
+    print("SEND: %s" % " ".join("%02x" % x for x in to_send))
+
     conn.write(to_send)
     conn.flush()
     time.sleep(1)
     received = conn.read(10000)
-    print("RECV: %s" % " ".join("%02x" % ord(x) for x in received))
+    print("RECV: %s" % " ".join("%02x" % x for x in received))
+
     return received[-8:-4]
 
 
 connection = serial.Serial(port=serial_port, baudrate=115200, timeout=0)
 print("     |  BARKER   | LEN |LEN_I| SEQ |  SOURCE   |   DEST    | CMD |DATA")
-print("Your key is '" + "".join("\\x%02x" % ord(x) for i in range(4) for x in
+print("Your key is '" + "".join("\\x%02x" % x for i in range(4) for x in
+
     getKeyPart(connection, i+1, inverter_id)) + "'")

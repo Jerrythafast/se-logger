@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 # Copyright (C) 2019 Jerrythafast
@@ -50,11 +50,12 @@ for filename in (x for x in sys.argv[1:] for x in iglob(x)):
 
   pos = -1
   while True:
-    pos = data.find("\x12\x34\x56\x79", pos + 1)
+    pos = data.find(b"\x12\x34\x56\x79", pos + 1)
     if pos == -1 or pos > len(data) - 20:
       break
     packets += 1
-    if ord(data[pos+18]) + (ord(data[pos+19]) << 8) in (0x0503, 0x003d):
+    if data[pos+18] + (data[pos+19] << 8) in (0x0503, 0x003d):
+
       encrypted += 1
 
 if not packets:

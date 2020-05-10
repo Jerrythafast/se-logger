@@ -1,4 +1,4 @@
-VERSION 0.0.14
+VERSION 0.0.15
 
 ===============================================================================
 INTRODUCTION
@@ -101,6 +101,9 @@ commands used.  Tested with Ubuntu 16.04, Python 2.7.11, MySQL 5.7.12, PHP 7.0.
 
 ===============================================================================
 CHANGELOG
+
+v0.0.15
+  - Converted to Python3  
 
 v0.0.14
   - Moved settings out of liveupdate.py to a separate file (thanks @mirakels).

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 # Copyright (C) 2019 Jerrythafast
@@ -77,7 +77,8 @@ crcTable = (
 def calcCrc(data):
     crc = 0x5a5a    # initial value
     for d in data:
-         crc = crcTable[(crc ^ ord(d)) & 0xff] ^ (crc >> 8)
+         crc = crcTable[(crc ^ d) & 0xff] ^ (crc >> 8)
+
     return crc
 
 def getKeyPart(conn, seq, inverter_id):
@@ -91,5 +92,6 @@ def getKeyPart(conn, seq, inverter_id):
 
 
 connection = serial.Serial(serial_port, 115200)
-print("Your key is '" + "".join("\\x%02x" % ord(x) for i in range(4) for x in
+print("Your key is '" + "".join("\\x%02x" % x for i in range(4) for x in
+
     getKeyPart(connection, i+1, inverter_id)) + "'")
