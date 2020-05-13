@@ -205,7 +205,7 @@ class SEParser:
         elif state == 8:
           # Reading message checksum.
           if len(data) == 20 + length + 2:
-            data = byterray(data)
+            data = bytearray(data)
             hdr = struct.unpack("<LHHHLLH", data[:20])
             # Check the checksum.
             if struct.unpack("<H", data[-2:])[0] != calcCrc(
