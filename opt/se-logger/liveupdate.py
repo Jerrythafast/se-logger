@@ -290,6 +290,10 @@ class PCAPParser:
         pcaprechdr = struct.unpack(byteorder + "LLLL", pcaprechdr)
         pcaptime = pcaprechdr[0] + pcaprechdr[1]/1000000.
         packet_offset = pcaprechdr[2]
+        if not packet_offset:
+          # Zero-length data; continue reading the next packet.
+          # This may also happen if the file is damaged and ends in a stream of zeros.
+          continue
 
         # Skip over Ethernet header. It may have 4 additional bytes if it is a VLAN tagged frame.
         etherhdr = f.read(etherhdrlen)
