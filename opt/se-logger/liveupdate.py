@@ -508,7 +508,7 @@ for filename in sys.argv[1:]:
   for hdr, msg in parser.get_messages(byteiterator):
     if hdr[6] == 0x0503:
       eprint("Setting new 0503 key")
-      db.execute("UPDATE live_update SET last_0503 = %s", (msg,))
+      db.execute("UPDATE live_update SET last_0503 = %s", (bytes(msg),))
       db.commit()
     if hdr[6] != 0x0500:
       continue
