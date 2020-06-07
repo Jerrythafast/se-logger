@@ -505,7 +505,7 @@ reader = PCAPParser()
 for filename in sys.argv[1:]:
   eprint("Reading from %s" % filename)
   if filename == "-":
-    f = sys.stdin
+    f = sys.stdin.buffer
   else:
     f = open(filename, 'rb')
   byteiterator = reader.get_data_from_pcap(f)
