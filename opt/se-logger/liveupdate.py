@@ -25,7 +25,7 @@ import struct, sys, MySQLdb, time
 from collections import namedtuple
 from config import db_user, db_pass, db_name, db_host, db_port, inverter_private_key
 
-__version__ = "0.0.15"
+__version__ = "0.0.16"
 
 #############################################################################################
 

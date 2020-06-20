@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2019 Jerrythafast
+ * Copyright (C) 2020 Jerrythafast
  *
  * This file is part of se-logger, which captures telemetry data from
  * the TCP traffic of SolarEdge PV inverters.
@@ -19,7 +19,7 @@
  * along with se-logger.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//Version 0.0.11
+//Version 0.0.16
 //SETTINGS
 define("DB_HOST", "localhost");
 define("DB_PORT", "3306");
@@ -28,7 +28,7 @@ define("DB_USERNAME", "dbuser");
 define("DB_PASSWORD", "dbpassword");
 define("PVO_API_KEY", "a2726abcfd6254409e725b628cfaed293745dbca");
 define("PVO_SYSTEM_ID", "12345");
-
+define("PVO_DONATED", true);  // Change 'true' to 'false' if you have not donated to PVOutput.
 
 
 $db = new PDO(
@@ -50,12 +50,13 @@ $q = $db->query(
     'ORDER BY timestamp' .
   ') x ' .
   'WHERE timestamp > (SELECT pvo_last_live FROM live_update) ' .
-  'LIMIT 100');
+  'AND timestamp > UNIX_TIMESTAMP(NOW() - INTERVAL ' . (PVO_DONATED? '90' : '14') . ' DAY) ' .
+  'LIMIT ' . (PVO_DONATED? '100' : '30'));
 if($q === false)
   die(date("Y-m-d H:i:s  ") . "Could not get data!" . PHP_EOL);
 
-$lastdate = 0;
 $data = array();
+$timestamps = array();
 while($row = $q->fetch()){
   array_push($data, implode(",", [
     date("Ymd", $row["timestamp"]),
@@ -67,25 +68,44 @@ while($row = $q->fetch()){
     $row["temperature"] <= 0? "" : $row["temperature"],
     $row["v_dc"] == 0? "" : $row["v_dc"]
   ]));
-  $lastdate = $row["timestamp"];
+  array_push($timestamps, $row["timestamp"]);
 }
-$data = implode(";", $data);
-if(!$data)
+$datalen = count($data);
+while($datalen) {
+  $c = curl_init("http://pvoutput.org/service/r2/addbatchstatus.jsp");
+  curl_setopt_array($c, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => "data=" . implode(";", $data),
+    CURLOPT_HTTPHEADER => [
+      "X-Pvoutput-Apikey: " . PVO_API_KEY,
+      "X-Pvoutput-SystemId: " . PVO_SYSTEM_ID
+    ]
+  ]);
+  $result = curl_exec($c);
+  $response = curl_getinfo($c, CURLINFO_RESPONSE_CODE);
+
+  if($result === false)
+    die(date("Y-m-d H:i:s  ") . "cURL error " . curl_errno($c) . ", exiting: " . curl_error($c) . PHP_EOL);
+
+  if($response !== 200){
+    if($response !== 400 || $result !== "Bad request 400: Moon Powered")
+      die(date("Y-m-d H:i:s  ") . "PVOutput error " . $response . ", exiting: " . $result . PHP_EOL);
+
+    // Handle 'Moon powered' error.
+    if ($datalen > 1) {
+      // Try sending the first half of the data again.
+      $datalen = (int)($datalen / 2);
+      $data = array_slice($data, 0, $datalen);
+      $timestamps = array_slice($timestamps, 0, $datalen);
+      continue;
+    } else {
+        echo(date("Y-m-d H:i:s  ") . "Skipping 'Moon powered' timestamp: " . date("Y-m-d H:i:s", $timestamps[0]) . PHP_EOL);
+    }
+  }
+
+  // Update database to keep track of last sent data point.
+  $db->prepare("UPDATE live_update SET pvo_last_live = ?")->execute([array_pop($timestamps)]);
   exit;
-
-$c = curl_init("http://pvoutput.org/service/r2/addbatchstatus.jsp");
-curl_setopt_array($c, [
-  CURLOPT_RETURNTRANSFER => true,
-  CURLOPT_FAILONERROR => true,
-  CURLOPT_POST => true,
-  CURLOPT_POSTFIELDS => "data=" . $data,
-  CURLOPT_HTTPHEADER => [
-    "X-Pvoutput-Apikey: " . PVO_API_KEY,
-    "X-Pvoutput-SystemId: " . PVO_SYSTEM_ID
-  ]
-]);
-if(curl_exec($c) === false)
-  die(date("Y-m-d H:i:s  ") . "cURL error, exiting: " . curl_error($c) . PHP_EOL);
-
-$db->prepare("UPDATE live_update SET pvo_last_live = ?")->execute([$lastdate]);
+}
 ?>

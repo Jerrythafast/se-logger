@@ -1,4 +1,4 @@
-VERSION 0.0.15
+VERSION 0.0.16
 
 ===============================================================================
 INTRODUCTION
@@ -101,6 +101,15 @@ commands used.  Tested with Ubuntu 16.04, Python 3.5+, MySQL 5.7.12, PHP 7.0.
 
 ===============================================================================
 CHANGELOG
+
+v0.0.16
+  - Various Python3-related fixes (thanks @RobBie1221 and @nrosier).
+  - pvo_upload.php will no longer try to upload data older than 90 days.
+  - Added PVO_DONATED option to pvo_upload.php. When set to false, stricter
+    limits are applied: data must not be older than 14 days, and only 30 data
+    points are uploaded simultaneously.
+  - When PVOutput returns the 'Moon powered' error message, pvo_upload.php will
+    try to identify the offending data point and skip uploading it.
 
 v0.0.15
   - Converted to Python3 (thanks @Expaso).
