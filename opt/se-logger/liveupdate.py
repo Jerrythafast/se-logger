@@ -2,7 +2,7 @@
 #xpylint: disable=no-member
 
 #
-# Copyright (C) 2020 Jerrythafast
+# Copyright (C) 2022 Jerrythafast
 #
 # This file is part of se-logger, which captures telemetry data from
 # the TCP traffic of SolarEdge PV inverters.
@@ -25,7 +25,7 @@ import struct, sys, MySQLdb, time
 from collections import namedtuple
 from config import db_user, db_pass, db_name, db_host, db_port, inverter_private_key
 
-__version__ = "0.0.16"
+__version__ = "0.0.17"
 
 #############################################################################################
 
@@ -451,7 +451,7 @@ def parse0500(data):
         'p_apparent':   inv.Papparent,
         'p_reactive':   inv.Preactive
       }
-    elif type == 0x0011 and length in (200, 264):  # 3ph inverter
+    elif type == 0x0011 and length in (200, 264, 266):  # 3ph inverter
       inv = SEDataInverter3.parse(data, pos + 12)
       yield {
         'inv_id':       id & ~0x00800000,

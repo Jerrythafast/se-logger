@@ -1,4 +1,4 @@
-VERSION 0.0.16
+VERSION 0.0.17
 
 ===============================================================================
 INTRODUCTION
@@ -101,6 +101,9 @@ commands used.  Tested with Ubuntu 16.04, Python 3.5+, MySQL 5.7.12, PHP 7.0.
 
 ===============================================================================
 CHANGELOG
+
+v0.0.17
+  - Added support for new three-phase inverter firmware versions.
 
 v0.0.16
   - Various Python3-related fixes (thanks @RobBie1221 and @nrosier).
